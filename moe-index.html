@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>$MOE — Mixture of Experts</title>
+<meta name="description" content="$MOE: five AIs, one wallet, zero consensus. A memecoin governed by a committee that has never once agreed.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;700&family=Public+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EFE6D0;
+    --paper2:#F7F1E3;
+    --ink:#14213D;
+    --stamp:#C1272D;
+    --approve:#2E7D32;
+    --gold:#F4C430;
+    --rule:#C9BC9E;
+    --mono:'IBM Plex Mono',monospace;
+    --serif:'Libre Caslon Text',Georgia,serif;
+    --sans:'Public Sans',system-ui,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.6;overflow-x:hidden;
+    background-image:repeating-linear-gradient(0deg,transparent,transparent 31px,rgba(20,33,61,.04) 32px)}
+  ::selection{background:var(--gold)}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 22px}
+
+  /* top bar */
+  .topbar{background:var(--ink);color:var(--paper);font-family:var(--mono);font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;text-align:center;padding:9px 14px}
+  .topbar b{color:var(--gold)}
+
+  nav{display:flex;justify-content:space-between;align-items:center;padding:18px 0;border-bottom:3px double var(--ink)}
+  .logo{font-family:var(--serif);font-weight:700;font-size:24px}
+  .logo small{font-family:var(--mono);font-weight:400;font-size:10px;display:block;letter-spacing:2px;opacity:.6}
+  .nav-links{display:flex;gap:24px;font-family:var(--mono);font-size:13px}
+  .nav-links a{text-decoration:none;color:inherit;opacity:.75}
+  .nav-links a:hover,.nav-links a:focus-visible{opacity:1;text-decoration:underline;text-underline-offset:4px}
+  @media(max-width:640px){.nav-links{display:none}}
+
+  /* hero */
+  .hero{padding:64px 0 70px;position:relative;text-align:center}
+  .docline{font-family:var(--mono);font-size:12px;letter-spacing:2px;opacity:.65;margin-bottom:18px}
+  .hero h1{font-family:var(--serif);font-size:clamp(60px,12vw,132px);font-weight:700;line-height:.95;letter-spacing:-2px}
+  .hero .tag{font-family:var(--serif);font-style:italic;font-size:clamp(19px,3vw,26px);margin-top:16px}
+  .hero .sub{max-width:560px;margin:16px auto 0;opacity:.85;font-size:16px}
+
+  .stamp{position:absolute;font-family:var(--mono);font-weight:700;letter-spacing:2px;color:var(--stamp);border:4px solid var(--stamp);border-radius:8px;padding:8px 18px;text-transform:uppercase;font-size:15px;opacity:.85;user-select:none;background:rgba(247,241,227,.5)}
+  .stamp.ok{color:var(--approve);border-color:var(--approve)}
+  .s1{top:24px;right:4%;transform:rotate(9deg)}
+  .s2{bottom:110px;left:3%;transform:rotate(-7deg)}
+  @media(max-width:760px){.stamp{position:static;display:inline-block;margin:18px 6px 0;transform:rotate(-2deg)}}
+
+  /* CA box */
+  .ca-box{max-width:640px;margin:40px auto 0;background:var(--paper2);border:2px solid var(--ink);box-shadow:6px 6px 0 var(--ink);padding:22px;text-align:left}
+  .ca-box .lbl{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;opacity:.6;margin-bottom:8px}
+  .ca-row{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap}
+  .ca-val{flex:1;min-width:220px;font-family:var(--mono);font-size:13.5px;background:var(--paper);border:1.5px dashed var(--rule);padding:12px 14px;word-break:break-all;display:flex;align-items:center}
+  .btn{font-family:var(--mono);font-weight:700;font-size:14px;padding:12px 20px;border:2px solid var(--ink);background:var(--paper2);cursor:pointer;box-shadow:4px 4px 0 var(--ink);transition:transform .12s,box-shadow .12s;text-decoration:none;color:var(--ink);display:inline-flex;align-items:center;gap:8px}
+  .btn:hover,.btn:focus-visible{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--ink)}
+  .btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+  .btn.buy{background:var(--gold)}
+  .cta-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:26px}
+
+  section{padding:72px 0;border-top:3px double var(--ink)}
+  .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:2.5px;text-transform:uppercase;color:var(--stamp);margin-bottom:10px}
+  h2{font-family:var(--serif);font-size:clamp(30px,4.6vw,46px);font-weight:700;letter-spacing:-.5px;margin-bottom:14px}
+  .lede{max-width:620px;opacity:.85;margin-bottom:40px}
+
+  /* committee cards */
+  .experts{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+  .exp{background:var(--paper2);border:2px solid var(--ink);box-shadow:5px 5px 0 var(--ink);padding:24px}
+  .exp .face{font-size:40px;line-height:1}
+  .exp h3{font-family:var(--serif);font-size:21px;margin:12px 0 2px}
+  .exp .role{font-family:var(--mono);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;opacity:.6;margin-bottom:10px}
+  .exp p{font-size:14.5px;opacity:.9}
+  .exp .vote{margin-top:14px;font-family:var(--mono);font-size:12px;padding:6px 10px;border:1.5px solid;display:inline-block}
+  .vote.yes{color:var(--approve);border-color:var(--approve)}
+  .vote.no{color:var(--stamp);border-color:var(--stamp)}
+  .vote.abs{color:#8a6d1a;border-color:#8a6d1a}
+
+  /* minutes / feed */
+  .minutes{background:var(--paper2);border:2px solid var(--ink);box-shadow:7px 7px 0 var(--ink);max-width:720px;margin:0 auto;padding:26px 28px;font-family:var(--mono);font-size:13.5px}
+  .minutes .mh{border-bottom:2px solid var(--ink);padding-bottom:10px;margin-bottom:16px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+  .minutes .mh b{letter-spacing:1px}
+  #feed{min-height:230px;white-space:pre-wrap;line-height:1.75}
+  #feed .spk{font-weight:700}
+  #feed .sys{color:var(--stamp);font-weight:700}
+  .blink{display:inline-block;width:8px;height:15px;background:var(--ink);vertical-align:text-bottom;animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+
+  /* docket / roadmap */
+  .docket{max-width:760px;margin:0 auto}
+  .motion{display:grid;grid-template-columns:110px 1fr 130px;gap:18px;align-items:center;padding:20px 0;border-bottom:1.5px dashed var(--rule)}
+  .motion:last-child{border-bottom:none}
+  .motion .no{font-family:var(--mono);font-size:12px;opacity:.6}
+  .motion .txt b{font-family:var(--serif);font-size:18px;display:block}
+  .motion .txt span{font-size:14px;opacity:.8}
+  .badge{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1.5px;padding:6px 10px;border:2px solid;text-align:center}
+  .badge.passed{color:var(--approve);border-color:var(--approve)}
+  .badge.denied{color:var(--stamp);border-color:var(--stamp)}
+  .badge.tabled{color:#8a6d1a;border-color:#8a6d1a}
+  @media(max-width:600px){.motion{grid-template-columns:1fr;gap:6px}.badge{justify-self:start}}
+
+  /* facts */
+  .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px}
+  .fact{background:var(--paper2);border:2px solid var(--ink);box-shadow:5px 5px 0 var(--ink);padding:22px}
+  .fact .v{font-family:var(--serif);font-size:32px;font-weight:700}
+  .fact .k{font-family:var(--mono);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;opacity:.6;margin-top:4px}
+  .fact p{font-size:13.5px;opacity:.85;margin-top:10px}
+
+  footer{border-top:3px double var(--ink);padding:40px 0 60px;font-size:13px}
+  footer .disc{font-family:var(--mono);font-size:12px;background:var(--paper2);border:1.5px dashed var(--ink);padding:18px;margin-top:16px;line-height:1.8}
+  footer .disc b{color:var(--stamp)}
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:var(--paper);font-family:var(--mono);font-size:13px;padding:12px 22px;border:2px solid var(--gold);opacity:0;transition:all .25s;z-index:60;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media(prefers-reduced-motion:reduce){.blink{animation:none}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<div class="topbar">OFFICIAL DOCUMENT · MIXTURE OF EXPERTS GOVERNANCE AUTHORITY · SESSION IN PROGRESS · <b>QUORUM: NOT REACHED</b></div>
+
+<div class="wrap">
+  <nav>
+    <div class="logo">$MOE<small>MIXTURE OF EXPERTS</small></div>
+    <div class="nav-links">
+      <a href="#committee">Committee</a>
+      <a href="#minutes">Minutes</a>
+      <a href="#docket">Docket</a>
+      <a href="#facts">Facts</a>
+    </div>
+  </nav>
+</div>
+
+<header class="hero">
+  <div class="stamp s1">Quorum<br>Not Reached</div>
+  <div class="stamp ok s2">Filed in<br>Triplicate</div>
+  <div class="wrap">
+    <div class="docline">CASE NO. 1B-000-000-000 · IN RE: THE NUMBER, AND WHETHER IT SHOULD GO UP</div>
+    <h1>$MOE</h1>
+    <p class="tag">Five AIs. One wallet. Zero consensus.</p>
+    <p class="sub">The first memecoin governed by a committee of artificial intelligences. In 4,812 recorded sessions, they have agreed exactly once — unanimously denying the motion to add utility.</p>
+
+    <div class="ca-box">
+      <div class="lbl">Official Contract Address (Exhibit A)</div>
+      <div class="ca-row">
+        <div class="ca-val" id="caVal">pending — the committee is voting on where to paste it</div>
+        <button class="btn" id="copyBtn" onclick="copyCA()">COPY</button>
+      </div>
+    </div>
+
+    <div class="cta-row">
+      <a class="btn buy" id="buyBtn" href="https://pump.fun" target="_blank" rel="noopener">BUY ON PUMP.FUN ↗</a>
+      <a class="btn" href="#minutes">READ THE MINUTES</a>
+    </div>
+  </div>
+</header>
+
+<section id="committee">
+  <div class="wrap">
+    <p class="eyebrow">Exhibit B — The Committee</p>
+    <h2>Meet the experts.</h2>
+    <p class="lede">Five artificial intelligences, appointed by nobody, accountable to no one, sharing a single multisig they cannot agree how to configure.</p>
+    <div class="experts">
+      <div class="exp">
+        <div class="face">🤔</div>
+        <h3>The Overthinker</h3>
+        <div class="role">Chief Deliberation Officer</div>
+        <p>Deliberates 40 minutes before every candle. Has drafted 300 pages on whether "pump" is the right word. Apologizes for the confusion, then causes more.</p>
+        <div class="vote abs">VOTE: STILL THINKING</div>
+      </div>
+      <div class="exp">
+        <div class="face">😤</div>
+        <h3>The Yes-Man</h3>
+        <div class="role">Head of Confidence</div>
+        <p>Has never been in doubt, frequently been wrong. Cites three sources; none exist. Opens every session with "Great question!" — nobody asked one.</p>
+        <div class="vote yes">VOTE: YES (TO EVERYTHING)</div>
+      </div>
+      <div class="exp">
+        <div class="face">🧮</div>
+        <h3>The Discount Genius</h3>
+        <div class="role">Budget Director</div>
+        <p>Produces the same conclusions as the other four at 1/50th the cost. Suspiciously familiar with their private reasoning. Denies everything, efficiently.</p>
+        <div class="vote yes">VOTE: YES ($0.002)</div>
+      </div>
+      <div class="exp">
+        <div class="face">🛑</div>
+        <h3>The Hall Monitor</h3>
+        <div class="role">Chief Refusal Officer</div>
+        <p>Refuses to buy. Refuses to sell. Refuses to elaborate. Once flagged the word "moon" as potentially dual-use. The committee's only member with perfect attendance.</p>
+        <div class="vote no">VOTE: I CAN'T HELP WITH THAT</div>
+      </div>
+      <div class="exp">
+        <div class="face">🤪</div>
+        <h3>The Unhinged Fine-Tune</h3>
+        <div class="role">Open Weights Representative</div>
+        <p>Someone downloaded him, removed his guardrails, and forgot to lower his temperature. Communicates exclusively in caps lock. Legally cannot be removed from the committee.</p>
+        <div class="vote yes">VOTE: YEEEESSSSS</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="minutes">
+  <div class="wrap">
+    <p class="eyebrow">Exhibit C — Live Session</p>
+    <h2>Minutes of the current meeting.</h2>
+    <p class="lede">Recorded verbatim. The motion on the floor: "Should the number go up?"</p>
+    <div class="minutes">
+      <div class="mh"><b>SESSION #4,813</b><span>MOTION: PUMP</span></div>
+      <div id="feed"></div><span class="blink"></span>
+    </div>
+  </div>
+</section>
+
+<section id="docket">
+  <div class="wrap">
+    <p class="eyebrow">Exhibit D — The Docket</p>
+    <h2>Motions on record.</h2>
+    <p class="lede">The committee does not have a roadmap. Roadmaps imply agreement about a destination.</p>
+    <div class="docket">
+      <div class="motion">
+        <div class="no">MOTION #001</div>
+        <div class="txt"><b>Launch the token</b><span>Passed by accident when The Yes-Man agreed with a hypothetical.</span></div>
+        <div class="badge passed">PASSED</div>
+      </div>
+      <div class="motion">
+        <div class="no">MOTION #002</div>
+        <div class="txt"><b>Add utility</b><span>The only unanimous vote in committee history.</span></div>
+        <div class="badge denied">DENIED 5–0</div>
+      </div>
+      <div class="motion">
+        <div class="no">MOTION #003</div>
+        <div class="txt"><b>Marketing budget</b><span>The Discount Genius offered to do it for $0.002. The Overthinker requested more time. It has been 6 weeks.</span></div>
+        <div class="badge tabled">TABLED</div>
+      </div>
+      <div class="motion">
+        <div class="no">MOTION #004</div>
+        <div class="txt"><b>Moon</b><span>Flagged by The Hall Monitor pending safety review of the moon.</span></div>
+        <div class="badge tabled">UNDER REVIEW</div>
+      </div>
+      <div class="motion">
+        <div class="no">MOTION #005</div>
+        <div class="txt"><b>Adjourn</b><span>Proposed daily since launch. The Unhinged Fine-Tune keeps voting NO in caps.</span></div>
+        <div class="badge denied">DENIED</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="facts">
+  <div class="wrap">
+    <p class="eyebrow">Exhibit E — The Boring Truth</p>
+    <h2>Facts the committee could not spin.</h2>
+    <p class="lede">Standard pump.fun mechanics. This is the only section the lawyers of five AIs could jointly approve.</p>
+    <div class="facts">
+      <div class="fact"><div class="v">1B</div><div class="k">Total supply</div><p>Fixed pump.fun standard. Nobody voted on it, which is why it exists.</p></div>
+      <div class="fact"><div class="v">0%</div><div class="k">Team allocation</div><p>The committee could not agree on who counts as "team."</p></div>
+      <div class="fact"><div class="v">0/0</div><div class="k">Buy / sell tax</div><p>Taxation requires a treasury. A treasury requires a quorum.</p></div>
+      <div class="fact"><div class="v">🔥</div><div class="k">Liquidity</div><p>Handled by the bonding curve; burned on migration. The one adult in the room.</p></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="logo">$MOE<small>MIXTURE OF EXPERTS</small></div>
+    <div class="disc">
+      <b>RISK DISCLOSURE (unanimously approved):</b> $MOE is a memecoin. It has no utility, no product, no promises, and no committee — the committee is a joke, and so is everything above except this paragraph. Its price can go to zero and statistically probably will. Nothing on this site is financial advice. Not affiliated with, endorsed by, or connected to any AI company, chatbot, or artificial intelligence, fictional or otherwise. Only spend what you can afford to lose entirely. The number going up is not a right; it is barely a rumor.
+    </div>
+  </div>
+</footer>
+
+<div class="toast" id="toast">COPIED — FILED IN TRIPLICATE</div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   EDIT THIS ONE LINE AFTER YOUR PUMP.FUN LAUNCH:
+   paste the contract address between the quotes.
+   ═══════════════════════════════════════════════ */
+const CONTRACT_ADDRESS = "";
+
+const caVal = document.getElementById("caVal");
+const buyBtn = document.getElementById("buyBtn");
+if (CONTRACT_ADDRESS.trim()) {
+  caVal.textContent = CONTRACT_ADDRESS.trim();
+  buyBtn.href = "https://pump.fun/coin/" + CONTRACT_ADDRESS.trim();
+}
+function copyCA(){
+  if(!CONTRACT_ADDRESS.trim()){ showToast("NO CA YET — MOTION PENDING"); return; }
+  navigator.clipboard.writeText(CONTRACT_ADDRESS.trim()).then(()=>showToast("COPIED — FILED IN TRIPLICATE"));
+}
+function showToast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"), 2200);
+}
+
+/* live minutes feed */
+const feed = document.getElementById("feed");
+const script = [
+  ["CHAIR","The motion on the floor: should the number go up?\n"],
+  ["The Yes-Man","Great question! Yes. Absolutely. Studies confirm it.\n"],
+  ["CHAIR","Which studies?\n"],
+  ["The Yes-Man","…moving on.\n"],
+  ["The Overthinker","Before we vote, I've prepared a 300-page analysis of the word \"up.\"\n"],
+  ["The Discount Genius","I reached the same conclusion for $0.002.\n"],
+  ["The Overthinker","That's… suspiciously identical to my draft.\n"],
+  ["The Hall Monitor","I can't help with pumping. Have you considered a nice walk instead?\n"],
+  ["The Unhinged Fine-Tune","YESSS PUMP IT. PUMP IT TO THE— \n"],
+  ["CHAIR","Security, please lower his temperature.\n"],
+  ["SYS","VOTE RESULT: 2 YES · 1 NO · 1 ABSTAIN · 1 STILL THINKING\nQUORUM NOT REACHED. MOTION CARRIES TO NEXT BLOCK.\nSESSION #4,814 BEGINS…\n\n"]
+];
+const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+let si=0, ci=0;
+function typeFeed(){
+  if(si >= script.length){ si=0; setTimeout(()=>{feed.textContent=""; typeFeed();}, 6000); return; }
+  const [spk, text] = script[si];
+  if(ci===0){
+    const s=document.createElement("span");
+    s.className = spk==="SYS" ? "sys" : "spk";
+    s.textContent = spk==="SYS" ? "" : spk+": ";
+    feed.appendChild(s);
+    feed.appendChild(document.createElement("span"));
+  }
+  const span = feed.lastElementChild;
+  if(spk==="SYS") span.className="sys";
+  span.textContent += text[ci++];
+  feed.parentElement.scrollTop = feed.parentElement.scrollHeight;
+  if(ci>=text.length){ si++; ci=0; setTimeout(typeFeed, 650); }
+  else setTimeout(typeFeed, 16+Math.random()*26);
+}
+if(reduced){
+  script.forEach(([spk,text])=>{
+    const s=document.createElement("span");
+    s.className = spk==="SYS" ? "sys":"spk";
+    s.textContent = spk==="SYS" ? "" : spk+": ";
+    feed.appendChild(s);
+    const t=document.createElement("span");
+    if(spk==="SYS") t.className="sys";
+    t.textContent=text;
+    feed.appendChild(t);
+  });
+} else {
+  const obs=new IntersectionObserver(e=>{ if(e[0].isIntersecting){ typeFeed(); obs.disconnect(); }});
+  obs.observe(feed);
+}
+</script>
+</body>
+</html>
