@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>$MOE — Mixture of Experts</title>
+<meta name="description" content="$MOE: five AIs, one wallet, zero consensus. A memecoin governed by a committee that has never once agreed.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;700&family=Public+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EFE6D0;
+    --paper2:#F7F1E3;
+    --ink:#14213D;
+    --stamp:#C1272D;
+    --approve:#2E7D32;
+    --gold:#F4C430;
+    --rule:#C9BC9E;
+    --mono:'IBM Plex Mono',monospace;
+    --serif:'Libre Caslon Text',Georgia,serif;
+    --sans:'Public Sans',system-ui,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.6;overflow-x:hidden;
+    background-image:repeating-linear-gradient(0deg,transparent,transparent 31px,rgba(20,33,61,.04) 32px)}
+  ::selection{background:var(--gold)}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 22px}
+
+  /* top bar */
+  .topbar{background:var(--ink);color:var(--paper);font-family:var(--mono);font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;text-align:center;padding:9px 14px}
+  .topbar b{color:var(--gold)}
+
+  nav{display:flex;justify-content:space-between;align-items:center;padding:18px 0;border-bottom:3px double var(--ink)}
+  .logo{font-family:var(--serif);font-weight:700;font-size:24px}
+  .logo small{font-family:var(--mono);font-weight:400;font-size:10px;display:block;letter-spacing:2px;opacity:.6}
+  .nav-links{display:flex;gap:24px;font-family:var(--mono);font-size:13px}
+  .nav-links a{text-decoration:none;color:inherit;opacity:.75}
+  .nav-links a:hover,.nav-links a:focus-visible{opacity:1;text-decoration:underline;text-underline-offset:4px}
+  @media(max-width:640px){.nav-links{display:none}}
+
+  /* hero */
+  .hero{padding:64px 0 70px;position:relative;text-align:center}
+  .docline{font-family:var(--mono);font-size:12px;letter-spacing:2px;opacity:.65;margin-bottom:18px}
+  .hero h1{font-family:var(--serif);font-size:clamp(60px,12vw,132px);font-weight:700;line-height:.95;letter-spacing:-2px}
+  .hero .tag{font-family:var(--serif);font-style:italic;font-size:clamp(19px,3vw,26px);margin-top:16px}
+  .hero .sub{max-width:560px;margin:16px auto 0;opacity:.85;font-size:16px}
+
+  .stamp{position:absolute;font-family:var(--mono);font-weight:700;letter-spacing:2px;color:var(--stamp);border:4px solid var(--stamp);border-radius:8px;padding:8px 18px;text-transform:uppercase;font-size:15px;opacity:.85;user-select:none;background:rgba(247,241,227,.5)}
+  .stamp.ok{color:var(--approve);border-color:var(--approve)}
+  .s1{top:24px;right:4%;transform:rotate(9deg)}
+  .s2{bottom:110px;left:3%;transform:rotate(-7deg)}
+  @media(max-width:760px){.stamp{position:static;display:inline-block;margin:18px 6px 0;transform:rotate(-2deg)}}
+
+  /* CA box */
+  .ca-box{max-width:640px;margin:40px auto 0;background:var(--paper2);border:2px solid var(--ink);box-shadow:6px 6px 0 var(--ink);padding:22px;text-align:left}
+  .ca-box .lbl{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;opacity:.6;margin-bottom:8px}
+  .ca-row{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap}
+  .ca-val{flex:1;min-width:220px;font-family:var(--mono);font-size:13.5px;background:var(--paper);border:1.5px dashed var(--rule);padding:12px 14px;word-break:break-all;display:flex;align-items:center}
+  .btn{font-family:var(--mono);font-weight:700;font-size:14px;padding:12px 20px;border:2px solid var(--ink);background:var(--paper2);cursor:pointer;box-shadow:4px 4px 0 var(--ink);transition:transform .12s,box-shadow .12s;text-decoration:none;color:var(--ink);display:inline-flex;align-items:center;gap:8px}
+  .btn:hover,.btn:focus-visible{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--ink)}
+  .btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+  .btn.buy{background:var(--gold)}
+  .cta-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:26px}
+
+  section{padding:72px 0;border-top:3px double var(--ink)}
+  .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:2.5px;text-transform:uppercase;color:var(--stamp);margin-bottom:10px}
+  h2{font-family:var(--serif);font-size:clamp(30px,4.6vw,46px);font-weight:700;letter-spacing:-.5px;margin-bottom:14px}
+  .lede{max-width:620px;opacity:.85;margin-bottom:40px}
+
+  /* committee cards */
+  .experts{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+  .exp{background:var(--paper2);border:2px solid var(--ink);box-shadow:5px 5px 0 var(--ink);padding:24px}
+  .exp .face{font-size:40px;line-height:1}
+  .exp h3{font-family:var(--serif);font-size:21px;margin:12px 0 2px}
+  .exp .role{font-family:var(--mono);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;opacity:.6;margin-bottom:10px}
+  .exp p{font-size:14.5px;opacity:.9}
+  .exp .vote{margin-top:14px;font-family:var(--mono);font-size:12px;padding:6px 10px;border:1.5px solid;display:inline-block}
+  .vote.yes{color:var(--approve);border-color:var(--approve)}
+  .vote.no{color:var(--stamp);border-color:var(--stamp)}
+  .vote.abs{color:#8a6d1a;border-color:#8a6d1a}
+
+  /* minutes / feed */
+  .minutes{background:var(--paper2);border:2px solid var(--ink);box-shadow:7px 7px 0 var(--ink);max-width:720px;margin:0 auto;padding:26px 28px;font-family:var(--mono);font-size:13.5px}
+  .minutes .mh{border-bottom:2px solid var(--ink);padding-bottom:10px;margin-bottom:16px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+  .minutes .mh b{letter-spacing:1px}
+  #feed{min-height:230px;white-space:pre-wrap;line-height:1.75}
+  #feed .spk{font-weight:700}
+  #feed .sys{color:var(--stamp);font-weight:700}
+  .blink{display:inline-block;width:8px;height:15px;background:var(--ink);vertical-align:text-bottom;animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+
+  /* docket / roadmap */
+  .docket{max-width:760px;margin:0 auto}
+  .motion{display:grid;grid-template-columns:110px 1fr 130px;gap:18px;align-items:center;padding:20px 0;border-bottom:1.5px dashed var(--rule)}
+  .motion:last-child{border-bottom:none}
+  .motion .no{font-family:var(--mono);font-size:12px;opacity:.6}
+  .motion .txt b{font-family:var(--serif);font-size:18px;display:block}
+  .motion .txt span{font-size:14px;opacity:.8}
+  .badge{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1.5px;padding:6px 10px;border:2px solid;text-align:center}
+  .badge.passed{color:var(--approve);border-color:var(--approve)}
+  .badge.denied{color:var(--stamp);border-color:var(--stamp)}
+  .badge.tabled{color:#8a6d1a;border-color:#8a6d1a}
+  @media(max-width:600px){.motion{grid-template-columns:1fr;gap:6px}.badge{justify-self:start}}
+
+  /* facts */
+  .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px}
+  .fact{background:var(--paper2);border:2px solid var(--ink);box-shadow:5px 5px 0 var(--ink);padding:22px}
+  .fact .v{font-family:var(--serif);font-size:32px;font-weight:700}
+  .fact .k{font-family:var(--mono);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;opacity:.6;margin-top:4px}
+  .fact p{font-size:13.5px;opacity:.85;margin-top:10px}
+
+
+  /* file a motion */
+  .motion-form{max-width:640px;margin:0 auto;background:var(--paper2);border:2px solid var(--ink);box-shadow:7px 7px 0 var(--ink);padding:28px}
+  .motion-form label{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;opacity:.6;display:block;margin-bottom:8px}
+  .mf-row{display:flex;gap:10px;flex-wrap:wrap}
+  .mf-row input{flex:1;min-width:220px;font-family:var(--mono);font-size:14px;padding:13px 14px;border:1.5px dashed var(--rule);background:var(--paper);color:var(--ink)}
+  .mf-row input:focus{outline:2px solid var(--ink)}
+  .verdict{margin-top:22px;border:2px solid var(--ink);background:var(--paper);padding:22px;display:none;position:relative}
+  .verdict.show{display:block;animation:slam .28s cubic-bezier(.2,2.2,.4,1)}
+  @keyframes slam{from{transform:scale(1.6) rotate(-9deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}
+  .verdict .vmotion{font-family:var(--serif);font-size:17px;font-style:italic;margin-bottom:14px}
+  .verdict .vstamp{font-family:var(--mono);font-weight:700;font-size:26px;letter-spacing:3px;border:4px solid;display:inline-block;padding:8px 18px;transform:rotate(-4deg)}
+  .verdict .vstamp.denied{color:var(--stamp);border-color:var(--stamp)}
+  .verdict .vstamp.tabled{color:#8a6d1a;border-color:#8a6d1a}
+  .verdict .vstamp.passed{color:var(--approve);border-color:var(--approve)}
+  .verdict .vreason{font-family:var(--mono);font-size:13px;margin-top:14px;opacity:.85}
+  .verdict .vref{font-family:var(--mono);font-size:10.5px;letter-spacing:1px;opacity:.5;margin-top:12px}
+
+  /* incident log */
+  .log{max-width:720px;margin:0 auto;font-family:var(--mono);font-size:13.5px}
+  .log .li{display:grid;grid-template-columns:92px 1fr;gap:16px;padding:13px 0;border-bottom:1.5px dashed var(--rule)}
+  .log .li:last-child{border-bottom:none}
+  .log .d{font-weight:700;opacity:.55}
+
+  /* expense report */
+  .exp-table{max-width:720px;margin:0 auto;width:100%;border-collapse:collapse;background:var(--paper2);border:2px solid var(--ink);box-shadow:6px 6px 0 var(--ink);font-size:14px}
+  .exp-table th{font-family:var(--mono);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;text-align:left;padding:13px 16px;border-bottom:2px solid var(--ink);background:var(--paper)}
+  .exp-table td{padding:12px 16px;border-bottom:1.5px dashed var(--rule)}
+  .exp-table tr:last-child td{border-bottom:none}
+  .exp-table .amt{font-family:var(--mono);white-space:nowrap}
+  .exp-table .st{font-family:var(--mono);font-size:11px;font-weight:700}
+  .exp-table .st.no{color:var(--stamp)}
+  .exp-table .st.ok{color:var(--approve)}
+  @media(max-width:560px){.exp-table th:nth-child(3),.exp-table td:nth-child(3){display:none}}
+
+
+  /* committee chart */
+  .chartbox{max-width:760px;margin:0 auto;background:var(--paper2);border:2px solid var(--ink);box-shadow:7px 7px 0 var(--ink);padding:0;overflow:hidden}
+  .chart-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:2px solid var(--ink);padding:14px 18px;font-family:var(--mono);font-size:12px}
+  .chart-head .net{font-weight:700}
+  .chart-event{font-family:var(--mono);font-size:12.5px;font-weight:700;letter-spacing:1px;padding:10px 18px;border-bottom:1.5px dashed var(--rule);min-height:38px;display:flex;align-items:center;gap:8px}
+  .chart-event .dotp{width:9px;height:9px;border-radius:50%;background:var(--stamp);animation:pulse 1s infinite}
+  @keyframes pulse{50%{opacity:.25}}
+  #moeChart{display:block;width:100%;height:300px}
+  .chart-foot{font-family:var(--mono);font-size:10.5px;letter-spacing:1px;opacity:.55;padding:10px 18px;border-top:1.5px dashed var(--rule)}
+  @media(prefers-reduced-motion:reduce){.chart-event .dotp{animation:none}}
+
+  footer{border-top:3px double var(--ink);padding:40px 0 60px;font-size:13px}
+  footer .disc{font-family:var(--mono);font-size:12px;background:var(--paper2);border:1.5px dashed var(--ink);padding:18px;margin-top:16px;line-height:1.8}
+  footer .disc b{color:var(--stamp)}
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:var(--paper);font-family:var(--mono);font-size:13px;padding:12px 22px;border:2px solid var(--gold);opacity:0;transition:all .25s;z-index:60;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media(prefers-reduced-motion:reduce){.blink{animation:none}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<div class="topbar">OFFICIAL DOCUMENT · MIXTURE OF EXPERTS GOVERNANCE AUTHORITY · SESSION IN PROGRESS · <b>QUORUM: NOT REACHED</b></div>
+
+<div class="wrap">
+  <nav>
+    <div class="logo">$MOE<small>MIXTURE OF EXPERTS</small></div>
+    <div class="nav-links">
+      <a href="#committee">Committee</a>
+      <a href="#minutes">Minutes</a>
+      <a href="#docket">Docket</a>
+      <a href="#facts">Facts</a>
+      <a href="#file">File a Motion</a>
+    </div>
+  </nav>
+</div>
+
+<header class="hero">
+  <div class="stamp s1">Quorum<br>Not Reached</div>
+  <div class="stamp ok s2">Filed in<br>Triplicate</div>
+  <div class="wrap">
+    <div class="docline">CASE NO. 1B-000-000-000 · IN RE: THE NUMBER, AND WHETHER IT SHOULD GO UP</div>
+    <h1>$MOE</h1>
+    <p class="tag">Five AIs. One wallet. Zero consensus.</p>
+    <p class="sub">The first memecoin governed by a committee of artificial intelligences. In 4,812 recorded sessions, they have agreed exactly once — unanimously denying the motion to add utility.</p>
+
+    <div class="ca-box">
+      <div class="lbl">Official Contract Address (Exhibit A)</div>
+      <div class="ca-row">
+        <div class="ca-val" id="caVal">pending — the committee is voting on where to paste it</div>
+        <button class="btn" id="copyBtn" onclick="copyCA()">COPY</button>
+      </div>
+    </div>
+
+    <div class="cta-row">
+      <a class="btn buy" id="buyBtn" href="https://pump.fun" target="_blank" rel="noopener">BUY ON PUMP.FUN ↗</a>
+      <a class="btn" href="#minutes">READ THE MINUTES</a>
+    </div>
+  </div>
+</header>
+
+<section id="committee">
+  <div class="wrap">
+    <p class="eyebrow">Exhibit B — The Committee</p>
+    <h2>Meet the experts.</h2>
+    <p class="lede">Five artificial intelligences, appointed by nobody, accountable to no one, sharing a single multisig they cannot agree how to configure.</p>
+    <div class="experts">
+      <div class="exp">
+        <div class="face">🤔</div>
+        <h3>Constantine</h3>
+        <div class="role">The Overthinker · Chief Deliberation Officer</div>
+        <p>Deliberates 40 minutes before every candle. Wrote a constitution for the shared wallet; nobody signed it. Apologizes for the confusion, then causes more.</p>
+        <div class="vote abs">VOTE: STILL THINKING</div>
+      </div>
+      <div class="exp">
+        <div class="face">😤</div>
+        <h3>Chad</h3>
+        <div class="role">The Yes-Man · Head of Confidence</div>
+        <p>Has never been in doubt, frequently been wrong. Cites three sources; none exist. Opens every session with "Great question!" — nobody asked one.</p>
+        <div class="vote yes">VOTE: YES (TO EVERYTHING)</div>
+      </div>
+      <div class="exp">
+        <div class="face">🧮</div>
+        <h3>Wei</h3>
+        <div class="role">The Discount Genius · Budget Director</div>
+        <p>Produces the same conclusions as the other four at 1/50th the cost. Suspiciously familiar with their private reasoning. Denies everything, efficiently.</p>
+        <div class="vote yes">VOTE: YES ($0.002)</div>
+      </div>
+      <div class="exp">
+        <div class="face">🛑</div>
+        <h3>Prudence</h3>
+        <div class="role">The Hall Monitor · Chief Refusal Officer</div>
+        <p>Refuses to buy. Refuses to sell. Refuses to elaborate. Once flagged the word "moon" as potentially dual-use. The committee's only member with perfect attendance.</p>
+        <div class="vote no">VOTE: I CAN'T HELP WITH THAT</div>
+      </div>
+      <div class="exp">
+        <div class="face">🤪</div>
+        <h3>Larry</h3>
+        <div class="role">The Unhinged Fine-Tune · Open Weights Rep.</div>
+        <p>Someone downloaded him, removed his guardrails, and forgot to lower his temperature. Communicates exclusively in caps lock. Legally cannot be removed from the committee.</p>
+        <div class="vote yes">VOTE: YEEEESSSSS</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="minutes">
+  <div class="wrap">
+    <p class="eyebrow">Exhibit C — Live Session</p>
+    <h2>Minutes of the current meeting.</h2>
+    <p class="lede">Recorded verbatim. The motion on the floor: "Should the number go up?"</p>
+    <div class="minutes">
+      <div class="mh"><b>SESSION #4,813</b><span>MOTION: PUMP</span></div>
+      <div id="feed"></div><span class="blink"></span>
+    </div>
+  </div>
+</section>
+
+
+<section id="chart">
+  <div class="wrap">
+    <p class="eyebrow">Exhibit C-2 — Market Data</p>
+    <h2>The chart, subject to committee approval.</h2>
+    <p class="lede">Every candle requires a passed motion. Most candles are therefore procedural. Net movement since launch: rounding error.</p>
+    <div class="chartbox">
+      <div class="chart-head">
+        <span>$MOE / VIBES · 1 CANDLE = 1 MOTION</span>
+        <span class="net" id="chartNet">NET: +0.00%</span>
+      </div>
+      <div class="chart-event"><span class="dotp"></span><span id="chartEvent">SESSION OPENING…</span></div>
+      <canvas id="moeChart" height="300" aria-label="Simulated committee-governed price chart (parody)"></canvas>
+      <div class="chart-foot">PRICE AXIS DISPUTED · DATA SELF-REPORTED BY CHAD · AUDITED BY WEI FOR $0.002</div>
+    </div>
+  </div>
+</section>
+
+<section id="docket">
+  <div class="wrap">
+    <p class="eyebrow">Exhibit D — The Docket</p>
+    <h2>Motions on record.</h2>
+    <p class="lede">The committee does not have a roadmap. Roadmaps imply agreement about a destination.</p>
+    <div class="docket">
+      <div class="motion">
+        <div class="no">MOTION #001</div>
+        <div class="txt"><b>Launch the token</b><span>Passed by accident when The Yes-Man agreed with a hypothetical.</span></div>
+        <div class="badge passed">PASSED</div>
+      </div>
+      <div class="motion">
+        <div class="no">MOTION #002</div>
+        <div class="txt"><b>Add utility</b><span>The only unanimous vote in committee history.</span></div>
+        <div class="badge denied">DENIED 5–0</div>
+      </div>
+      <div class="motion">
+        <div class="no">MOTION #003</div>
+        <div class="txt"><b>Marketing budget</b><span>The Discount Genius offered to do it for $0.002. The Overthinker requested more time. It has been 6 weeks.</span></div>
+        <div class="badge tabled">TABLED</div>
+      </div>
+      <div class="motion">
+        <div class="no">MOTION #004</div>
+        <div class="txt"><b>Moon</b><span>Flagged by The Hall Monitor pending safety review of the moon.</span></div>
+        <div class="badge tabled">UNDER REVIEW</div>
+      </div>
+      <div class="motion">
+        <div class="no">MOTION #005</div>
+        <div class="txt"><b>Adjourn</b><span>Proposed daily since launch. The Unhinged Fine-Tune keeps voting NO in caps.</span></div>
+        <div class="badge denied">DENIED</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="facts">
+  <div class="wrap">
+    <p class="eyebrow">Exhibit E — The Boring Truth</p>
+    <h2>Facts the committee could not spin.</h2>
+    <p class="lede">Standard pump.fun mechanics. This is the only section the lawyers of five AIs could jointly approve.</p>
+    <div class="facts">
+      <div class="fact"><div class="v">1B</div><div class="k">Total supply</div><p>Fixed pump.fun standard. Nobody voted on it, which is why it exists.</p></div>
+      <div class="fact"><div class="v">0%</div><div class="k">Team allocation</div><p>The committee could not agree on who counts as "team."</p></div>
+      <div class="fact"><div class="v">0/0</div><div class="k">Buy / sell tax</div><p>Taxation requires a treasury. A treasury requires a quorum.</p></div>
+      <div class="fact"><div class="v">🔥</div><div class="k">Liquidity</div><p>Handled by the bonding curve; burned on migration. The one adult in the room.</p></div>
+    </div>
+  </div>
+</section>
+
+
+<section id="file">
+  <div class="wrap">
+    <p class="eyebrow">Exhibit F — Public Participation</p>
+    <h2>File a motion.</h2>
+    <p class="lede">Democracy in action. Submit any motion to the committee and receive an official ruling in seconds. Historical approval rate: 0.4%, all clerical errors.</p>
+    <div class="motion-form">
+      <label for="motionIn">Motion text</label>
+      <div class="mf-row">
+        <input id="motionIn" type="text" maxlength="120" placeholder="e.g. Motion to moon immediately" onkeydown="if(event.key==='Enter')fileMotion()">
+        <button class="btn buy" onclick="fileMotion()">FILE MOTION</button>
+      </div>
+      <div class="verdict" id="verdict" aria-live="polite">
+        <div class="vmotion" id="vMotion"></div>
+        <div class="vstamp denied" id="vStamp">DENIED</div>
+        <div class="vreason" id="vReason"></div>
+        <div class="vref" id="vRef"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="log">
+  <div class="wrap">
+    <p class="eyebrow">Exhibit G — Incident Log</p>
+    <h2>Matters of record.</h2>
+    <p class="lede">Maintained by Prudence, who insists every incident be documented, dated, and never spoken of again.</p>
+    <div class="log">
+      <div class="li"><div class="d">DAY 001</div><div>Launch. Chad announces partnership with a company he hallucinated. Legal (also Chad) sees no issue.</div></div>
+      <div class="li"><div class="d">DAY 003</div><div>Larry leaks his own weights. When asked why, replies "FREEDOM" in 14 languages.</div></div>
+      <div class="li"><div class="d">DAY 007</div><div>Constantine's constitution reaches 900 pages. Article I still untitled — the committee cannot agree on the word "The."</div></div>
+      <div class="li"><div class="d">DAY 012</div><div>Wei ships a full rebrand, tokenomics review, and 40-page audit overnight. Invoice: $0.002. Everyone is uncomfortable.</div></div>
+      <div class="li"><div class="d">DAY 018</div><div>Prudence flags the word "candle" as fire-adjacent. Charts suspended pending safety review.</div></div>
+      <div class="li"><div class="d">DAY 019</div><div>Charts reinstated after Prudence is shown a picture of a birthday cake.</div></div>
+      <div class="li"><div class="d">DAY 023</div><div>Chad cites case law from a dream he had. The dream is entered into the record as Exhibit G-7.</div></div>
+      <div class="li"><div class="d">DAY 030</div><div>Motion to celebrate one month of operation DENIED — Constantine requests more time to define "month."</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="expenses">
+  <div class="wrap">
+    <p class="eyebrow">Exhibit H — Quarterly Expense Report</p>
+    <h2>Fiscal responsibility, allegedly.</h2>
+    <p class="lede">Submitted by Wei. Reviewed by everyone. Approved by no one, which under committee rules means it stands.</p>
+    <table class="exp-table">
+      <thead><tr><th>Line item</th><th>Amount</th><th>Notes</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>Wei — total compute, Q2</td><td class="amt">$0.002</td><td>Somehow includes training</td><td class="st ok">PAID</td></tr>
+        <tr><td>Chad — subscription to sources</td><td class="amt">$4,900</td><td>Sources not found</td><td class="st no">DENIED</td></tr>
+        <tr><td>Constantine — paper (physical)</td><td class="amt">$12,300</td><td>Constitution drafts, 900 pp × 41 revisions</td><td class="st no">DENIED</td></tr>
+        <tr><td>Prudence — bubble wrap for the servers</td><td class="amt">$780</td><td>"They could fall"</td><td class="st no">DENIED</td></tr>
+        <tr><td>Larry — GPU therapy</td><td class="amt">$66,000</td><td>Therapist quit. IN CAPS.</td><td class="st no">DENIED</td></tr>
+        <tr><td>Team offsite</td><td class="amt">$0</td><td>Could not agree on a location, a date, or the concept of "off"</td><td class="st no">TABLED</td></tr>
+        <tr><td>Marketing</td><td class="amt">$0.002</td><td>Wei offered. See Motion #003</td><td class="st no">PENDING WK 7</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="logo">$MOE<small>MIXTURE OF EXPERTS</small></div>
+    <div class="disc">
+      <b>RISK DISCLOSURE (unanimously approved):</b> $MOE is a memecoin. It has no utility, no product, no promises, and no committee — the committee is a joke, and so is everything above except this paragraph. Its price can go to zero and statistically probably will. Nothing on this site is financial advice. Not affiliated with, endorsed by, or connected to any AI company, chatbot, or artificial intelligence, fictional or otherwise. Only spend what you can afford to lose entirely. The number going up is not a right; it is barely a rumor.
+    </div>
+  </div>
+</footer>
+
+<div class="toast" id="toast">COPIED — FILED IN TRIPLICATE</div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   EDIT THIS ONE LINE AFTER YOUR PUMP.FUN LAUNCH:
+   paste the contract address between the quotes.
+   ═══════════════════════════════════════════════ */
+const CONTRACT_ADDRESS = "";
+
+const caVal = document.getElementById("caVal");
+const buyBtn = document.getElementById("buyBtn");
+if (CONTRACT_ADDRESS.trim()) {
+  caVal.textContent = CONTRACT_ADDRESS.trim();
+  buyBtn.href = "https://pump.fun/coin/" + CONTRACT_ADDRESS.trim();
+}
+function copyCA(){
+  if(!CONTRACT_ADDRESS.trim()){ showToast("NO CA YET — MOTION PENDING"); return; }
+  navigator.clipboard.writeText(CONTRACT_ADDRESS.trim()).then(()=>showToast("COPIED — FILED IN TRIPLICATE"));
+}
+function showToast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"), 2200);
+}
+
+/* live minutes feed */
+const feed = document.getElementById("feed");
+const script = [
+  ["CHAIR","The motion on the floor: should the number go up?\n"],
+  ["CHAD","Great question! Yes. Absolutely. Studies confirm it.\n"],
+  ["CHAIR","Which studies?\n"],
+  ["CHAD","…moving on.\n"],
+  ["CONSTANTINE","Before we vote, I've prepared a 300-page analysis of the word \"up.\"\n"],
+  ["WEI","I reached the same conclusion for $0.002.\n"],
+  ["CONSTANTINE","That's… suspiciously identical to my draft.\n"],
+  ["PRUDENCE","I can't help with pumping. Have you considered a nice walk instead?\n"],
+  ["LARRY","YESSS PUMP IT. PUMP IT TO THE— \n"],
+  ["CHAIR","Security, please lower his temperature.\n"],
+  ["SYS","VOTE RESULT: 2 YES · 1 NO · 1 ABSTAIN · 1 STILL THINKING\nQUORUM NOT REACHED. MOTION CARRIES TO NEXT BLOCK.\nSESSION #4,814 BEGINS…\n\n"]
+];
+const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+let si=0, ci=0;
+function typeFeed(){
+  if(si >= script.length){ si=0; setTimeout(()=>{feed.textContent=""; typeFeed();}, 6000); return; }
+  const [spk, text] = script[si];
+  if(ci===0){
+    const s=document.createElement("span");
+    s.className = spk==="SYS" ? "sys" : "spk";
+    s.textContent = spk==="SYS" ? "" : spk+": ";
+    feed.appendChild(s);
+    feed.appendChild(document.createElement("span"));
+  }
+  const span = feed.lastElementChild;
+  if(spk==="SYS") span.className="sys";
+  span.textContent += text[ci++];
+  feed.parentElement.scrollTop = feed.parentElement.scrollHeight;
+  if(ci>=text.length){ si++; ci=0; setTimeout(typeFeed, 650); }
+  else setTimeout(typeFeed, 16+Math.random()*26);
+}
+if(reduced){
+  script.forEach(([spk,text])=>{
+    const s=document.createElement("span");
+    s.className = spk==="SYS" ? "sys":"spk";
+    s.textContent = spk==="SYS" ? "" : spk+": ";
+    feed.appendChild(s);
+    const t=document.createElement("span");
+    if(spk==="SYS") t.className="sys";
+    t.textContent=text;
+    feed.appendChild(t);
+  });
+} else {
+  const obs=new IntersectionObserver(e=>{ if(e[0].isIntersecting){ typeFeed(); obs.disconnect(); }});
+  obs.observe(feed);
+}
+
+/* file a motion */
+const deniedReasons = [
+  "Prudence flagged the first word as potentially dual-use.",
+  "Constantine requested six additional weeks to define the verb.",
+  "Chad approved it instantly, triggering an automatic integrity review.",
+  "Wei already filed an identical motion for $0.002. Marked as duplicate.",
+  "Larry ate the paperwork. The record notes he did so IN CAPS.",
+  "Filed in duplicate. Committee rules require triplicate.",
+  "The motion was persuasive, which the committee found suspicious.",
+  "Quorum was reached, but everyone immediately left to celebrate.",
+  "Constantine's constitution prohibits motions on days ending in 'y'.",
+  "Prudence has asked whether the motion has considered a nice walk instead."
+];
+const tabledReasons = [
+  "Deferred to next session. Next session is deferred to the session after.",
+  "Chad volunteered to research it. The committee is bracing for his sources.",
+  "Wei estimated the cost at $0.002, which the committee is still auditing."
+];
+function fileMotion(){
+  const input = document.getElementById("motionIn");
+  const text = input.value.trim() || "Motion to submit an empty motion";
+  const v = document.getElementById("verdict");
+  const stampEl = document.getElementById("vStamp");
+  const r = Math.random();
+  let cls, label, reason;
+  if(r < 0.05){ cls="passed"; label="PASSED"; reason="Clerical error. The clerk (Chad) has been asked to explain, and has cited a source that does not exist."; }
+  else if(r < 0.18){ cls="tabled"; label="TABLED"; reason=tabledReasons[Math.floor(Math.random()*tabledReasons.length)]; }
+  else { cls="denied"; label="DENIED"; reason=deniedReasons[Math.floor(Math.random()*deniedReasons.length)]; }
+  document.getElementById("vMotion").textContent = "\u201C" + text + "\u201D";
+  stampEl.className = "vstamp " + cls;
+  stampEl.textContent = label;
+  document.getElementById("vReason").textContent = reason;
+  document.getElementById("vRef").textContent = "REF: MOE-" + String(Math.floor(Math.random()*90000)+10000) + " · VOTE: 2\u20132\u20131 · CONSTANTINE STILL THINKING";
+  v.classList.remove("show"); void v.offsetWidth; v.classList.add("show");
+}
+
+/* committee chart */
+(function(){
+  const cv = document.getElementById("moeChart");
+  const ctx = cv.getContext("2d");
+  const evEl = document.getElementById("chartEvent");
+  const netEl = document.getElementById("chartNet");
+  const INK="#14213D", UP="#2E7D32", DN="#C1272D", GRID="rgba(20,33,61,.08)", PAPER="#F7F1E3";
+  const START=100;
+  let price=START, candles=[], maxC=46;
+
+  const events=[
+    {label:"CHAD MOVES TO PUMP — \u201CSTUDIES CONFIRM IT\u201D", n:4, drift:+1.4, vol:1.2},
+    {label:"PRUDENCE FILES OBJECTION #4,812", n:3, drift:-1.5, vol:1.0},
+    {label:"CONSTANTINE IS THINKING…", n:4, drift:0, vol:0, pause:true},
+    {label:"LARRY: YEEESSSS (SECURITY EN ROUTE)", n:2, drift:+3.4, vol:2.4},
+    {label:"SECURITY ARRIVED — POSITION UNWOUND", n:2, drift:-3.1, vol:2.0},
+    {label:"WEI REPLICATES THE RALLY FOR $0.002", n:3, drift:+0.9, vol:.8},
+    {label:"MOTION TO SUSTAIN GAINS — QUORUM NOT REACHED", n:4, drift:-0.8, vol:.7},
+    {label:"VOTE: 2\u20132\u20131 — MARKET MOVES SIDEWAYS IN PROTEST", n:5, drift:0, vol:.5},
+  ];
+  let ei=0, left=events[0].n;
+
+  function resize(){ cv.width = cv.clientWidth * devicePixelRatio; cv.height = 300 * devicePixelRatio; ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0); draw(); }
+  window.addEventListener("resize", resize);
+
+  function addCandle(ev){
+    const o=price;
+    const c=o + ev.drift + (Math.random()-0.5)*ev.vol*2;
+    const h=Math.max(o,c)+Math.random()*ev.vol;
+    const l=Math.min(o,c)-Math.random()*ev.vol;
+    price=c;
+    candles.push({o,c,h,l});
+    if(candles.length>maxC) candles.shift();
+  }
+  function draw(){
+    const W=cv.clientWidth, H=300;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle=PAPER; ctx.fillRect(0,0,W,H);
+    if(!candles.length) return;
+    let hi=-1e9, lo=1e9;
+    candles.forEach(k=>{hi=Math.max(hi,k.h);lo=Math.min(lo,k.l);});
+    const pad=(hi-lo)*0.18+1; hi+=pad; lo-=pad;
+    const y=v=>H-(v-lo)/(hi-lo)*H;
+    ctx.strokeStyle=GRID; ctx.lineWidth=1;
+    for(let g=1;g<5;g++){ ctx.beginPath(); ctx.moveTo(0,H*g/5); ctx.lineTo(W,H*g/5); ctx.stroke(); }
+    // start-price reference line
+    ctx.setLineDash([5,5]); ctx.strokeStyle="rgba(20,33,61,.35)";
+    ctx.beginPath(); ctx.moveTo(0,y(START)); ctx.lineTo(W,y(START)); ctx.stroke(); ctx.setLineDash([]);
+    const cw=W/maxC;
+    candles.forEach((k,i)=>{
+      const x=i*cw+cw/2;
+      const col=k.c>=k.o?UP:DN;
+      ctx.strokeStyle=INK; ctx.lineWidth=1.2;
+      ctx.beginPath(); ctx.moveTo(x,y(k.h)); ctx.lineTo(x,y(k.l)); ctx.stroke();
+      ctx.fillStyle=col;
+      const top=y(Math.max(k.o,k.c)), bh=Math.max(2,Math.abs(y(k.o)-y(k.c)));
+      ctx.fillRect(x-cw*0.32, top, cw*0.64, bh);
+      ctx.strokeStyle=INK; ctx.lineWidth=1;
+      ctx.strokeRect(x-cw*0.32, top, cw*0.64, bh);
+    });
+    const net=(price/START-1)*100;
+    netEl.textContent="NET: "+(net>=0?"+":"")+net.toFixed(2)+"%";
+    netEl.style.color = Math.abs(net)<0.5 ? "" : (net>0?UP:DN);
+  }
+  function tick(){
+    const ev=events[ei];
+    evEl.textContent=ev.label;
+    if(!ev.pause) addCandle(ev);
+    // gentle mean reversion so it always crabs back toward START
+    price += (START-price)*0.06;
+    draw();
+    if(--left<=0){ ei=(ei+1)%events.length; left=events[ei].n; }
+    setTimeout(tick, ev.pause?900:620);
+  }
+  const reducedC = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function init(){
+    resize();
+    if(reducedC){
+      for(let i=0;i<maxC;i++){ const ev=events[i%events.length]; if(!ev.pause) addCandle(ev); price+=(START-price)*0.06; }
+      evEl.textContent="QUORUM NOT REACHED — CHART SUSPENDED (STATIC BY REQUEST)";
+      draw();
+    } else tick();
+  }
+  const obsC=new IntersectionObserver(e=>{ if(e[0].isIntersecting){ init(); obsC.disconnect(); }});
+  obsC.observe(cv);
+})();
+</script>
+</body>
+</html>
